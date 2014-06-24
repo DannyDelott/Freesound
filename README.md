@@ -33,7 +33,7 @@ Freesound Dataset Builder requires Java.  Download the latest version [here](htt
     
 ##Possible Issues
 
-Users who do not have the `refresh_token.json` file must re-authenticate as if they were new users.  See [New Users](#New Users).
+Users who do not have the `refresh_token.json` file must re-authenticate as if they were new users.  See [New Users](#new-users).
 
 It is possible that the value given for <QUANTITY_TO_DOWNLOAD> at runtime is larger than the number of audio files available on Freesound.  In this case, the Freesound Dataset Builder will download the total number of search results and display the following message:
 
@@ -41,11 +41,7 @@ It is possible that the value given for <QUANTITY_TO_DOWNLOAD> at runtime is lar
 
     #diskspace => [disks pace]
     
-Also, input text beginning with one-letter words may cause issues for the segmenter, either by incorrect segmentation or not segmenting it at all.  For example:
 
-    #adinnertable => [ad inner table]
-    #adentist => [adentist]
-    
 ##Credits
 
 HashTagSegmenter is based on Shyam Shankar's [Hashtag and URL Segmentation](https://github.com/shyam057cs/Machine-Learning/tree/master/Hashtag%20and%20Url%20Segmentation) script in Python.
