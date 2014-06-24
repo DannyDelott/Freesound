@@ -10,7 +10,7 @@ The Freesound Dataset Builder is an executable JAR file that logs into the [Free
 ##Download
 The `freesound.jar` file is an executable JAR that contains the entire Freesound Dataset builder program.  Users who only wish to use the program as-is should simply download this file and run it.  See [Usage](#usage).
 
-Also, users who are interested in making changes or compiling the program on their own are encouraged to download the Java project files and tinker away!
+Also, users who are interested in making changes or compiling the program on their own are encouraged to download the Java project files in the Freesound directory and tinker away!
 
 ##New Users 
 You must authorize the Freesound Dataset Builder to make API calls on your behalf by logging into the Freesound API with your Freesound account username and password. 
