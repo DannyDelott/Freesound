@@ -33,7 +33,11 @@ Freesound Dataset Builder requires Java.  Download the latest version [here](htt
     
 ##Possible Issues
 
-Segmenting by longest word from the left may cause trouble with singular nouns that pluralize with "-s" when the following word begins with an 's'.  For example:
+Users who do not have the `refresh_token.json` file must re-authenticate as if they were new users.  See [New Users](#New Users).
+
+It is possible that the value given for <QUANTITY_TO_DOWNLOAD> at runtime is larger than the number of audio files available on Freesound.  In this case, the Freesound Dataset Builder will download the total number of search results and display the following message:
+
+    WARNING: The quantity to download is larger than the number of available search results.
 
     #diskspace => [disks pace]
     
