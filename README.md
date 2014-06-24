@@ -40,7 +40,7 @@ Freesound Dataset Builder requires Java.  Download the latest version [here](htt
 
 *     WARNING: The quantity to download is larger than the number of available search results.
 
-* The Freesound API will thottle users who are searching for or downloading large quantities of audio files.  When this happens, the Freesound Dataset Builder will timeout for 60 seconds then continue where it left off.  Currently, Freesound throttles users who try and access more than 60 audio files per minute.
+* The Freesound API will thottle users who are accessing over 60 audio files per minute.  When this happens, the Freesound Dataset Builder will timeout for 60 seconds then continue where it left off. 
 
 
 ##Credits
