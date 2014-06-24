@@ -43,9 +43,5 @@ Freesound Dataset Builder requires Java.  Download the latest version [here](htt
 
 ##Credits
 
-HashTagSegmenter is based on Shyam Shankar's [Hashtag and URL Segmentation](https://github.com/shyam057cs/Machine-Learning/tree/master/Hashtag%20and%20Url%20Segmentation) script in Python.
-
-Special thanks to Sheng Lundquist for his help with rewriting Shankar's script in Java and the Hashtable optimization.
-
 Mentor: Dr. Garrett Kenyan
 
