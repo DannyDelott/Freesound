@@ -6,15 +6,15 @@ This Java program provides functionality for downloading audio files from the Fr
     
 ##How it Works
 
-HashTagSegmenter loads the word list into a Java Hashtable and checks the input text against the Hashtable key.  If the input text does not exist as a word in the Hashtable, it removes the last character from the input text and checks the new text against the Hashtable.  This process continues until all word segments are found and the input text is empty, or until no segments were found.  
+The Freesound Dataset Builder is an executable JAR file that logs into the Freesound API on the user's behalf and automates the process of downloading raw audio files and the meta-data associated with them. 
+
+NEW USERS: You must authorize the Freesound Dataset Builder to make API calls on your behalf by logging into the Freesound API with your Freesound account username and password. On the initial launch, the default web browser is opened automatically to the Freesound API login screen.  Next, click "Authorize" and copy and paste the authorization code into the Freesound Dataset Builder.  After this initial authorization, a file named "refresh_token.json" will be generated and used to automate the authorization process on future runs. 
 
 ##Usage
-To use the tool, place the HashTagSegmenter.java class in your project and envoke it using:
+To use the tool, simply open a Terminal, navigate to the directory containing "freesound.jar" and type:
 
-    HashTagSegmenter hts = new HashTagSegmenter("path/to/wordlist.txt");    // initializes with a word list
-    List<String> segments = hts.segmentWordsInHashTaggedToken("#thehashtag");   // stores segments in List<String>
+    java -jar freesound.jar <KEYWORD_IN_QUOTES> <MIN_DURATION_IN_SECONDS> <MAX_DURATION_IN_SECONDS> <QUANTITY_TO_DOWNLOAD> <FILETYPE_IN_QUOTES>
     
-    hts.printList(segments);    //prints segments
 
 ##Note
 
