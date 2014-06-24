@@ -35,7 +35,7 @@ Freesound Dataset Builder requires Java.  Download the latest version [here](htt
 
 * Users who do not have the `refresh_token.json` file or have one that contains an expired refresh token must re-authenticate as if they were new users.  See [New Users](#new-users).
 
-* It is possible that the value given for <QUANTITY_TO_DOWNLOAD> at runtime is larger than the number of audio files available on Freesound.  In this case, the Freesound Dataset Builder will download the total number of search results and display the following message:
+* It is possible that the value given for `<QUANTITY_TO_DOWNLOAD>` at runtime is larger than the number of audio files available on Freesound.  In this case, the Freesound Dataset Builder will download the total number of search results and display the following message:
     
 
 *     WARNING: The quantity to download is larger than the number of available search results.
