@@ -1,0 +1,60 @@
+public class Sound {
+
+	// ///////////////////
+	// GLOBAL VARIABLES //
+	// / /////////////////
+
+	private int id;
+	private String name;
+	private String username;
+	private String url;
+
+	// //////////////
+	// CONSTRUCTOR //
+	// //////////////
+
+	public Sound(int i, String n, String u) {
+		id = i;
+		name = n;
+		username = u;
+		url = makeUrl();
+
+	}
+
+	// /////////////////
+	// PUBLIC METHODS //
+	// /////////////////
+
+	public int getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	// //////////////////
+	// PRIVATE METHODS //
+	// //////////////////
+
+	/**
+	 * Makes the download url used to pull the .wav file from the Freesound API.
+	 * Requires an access token to actually download the file.
+	 * 
+	 * @return download url as {@code String}String
+	 */
+	private String makeUrl() {
+		String temp = "https://www.freesound.org/apiv2/sounds/" + id
+				+ "/download/";
+
+		return temp;
+	}
+}

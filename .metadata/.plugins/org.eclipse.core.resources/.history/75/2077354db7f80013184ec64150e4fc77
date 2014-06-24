@@ -1,0 +1,124 @@
+import java.util.ArrayList;
+import java.util.List;
+
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonObject;
+
+public class Sound {
+
+	// ///////////////////
+	// GLOBAL VARIABLES //
+	// / /////////////////
+
+	// the raw JSON object
+	JsonObject json;
+
+	// values found in the search results
+	private int id;
+	private String name;
+	private String username;
+	private List<String> tags;
+
+	// file type (wav, mp3, ogg, etc)
+	private String filetype;
+
+	// Values used with OAuth2 authentication
+	private String url;
+
+	// //////////////
+	// CONSTRUCTOR //
+	// //////////////
+
+	public Sound(JsonObject object, String type) {
+
+		// sets the raw JSON object
+		json = object;
+
+		// extracts fields
+		id = object.get("id").asInt();
+		name = object.get("name").asString();
+		username = object.get("username").asString();
+		tags = parseTags(json);
+
+		// makes download URL
+		url = makeUrl();
+
+	}
+
+	// /////////////////
+	// PUBLIC METHODS //
+	// /////////////////
+
+	public static String humanReadableByteCount(long bytes, boolean si) {
+		int unit = si ? 1000 : 1024;
+		if (bytes < unit)
+			return bytes + " B";
+		int exp = (int) (Math.log(bytes) / Math.log(unit));
+		String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1)
+				+ (si ? "" : "i");
+		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+	}
+
+	// /////////////////
+	// GLBOAL GETTERS //
+	// /////////////////
+
+	public JsonObject getJsonObject() {
+		return json;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public List<String> getTags() {
+		return tags;
+	}
+
+	// //////////////////
+	// PRIVATE METHODS //
+	// //////////////////
+
+	/**
+	 * Makes the download url used to pull the .wav file from the Freesound API.
+	 * Requires an access token to actually download the file.
+	 * 
+	 * @return {@code String} download url
+	 */
+	private String makeUrl() {
+		String temp = "https://www.freesound.org/apiv2/sounds/" + id
+				+ "/download/";
+
+		return temp;
+	}
+
+	/**
+	 * Parses out the "tag" array from the JsobObject
+	 * 
+	 * @param o
+	 *            {@code JsonObject} search result
+	 * @return {@code List<String>} tags
+	 */
+	private List<String> parseTags(JsonObject o) {
+		JsonArray a = o.get("tags").asArray();
+		List<String> temp = new ArrayList<String>();
+
+		for (int i = 0; i < a.size(); i++) {
+			temp.add(a.get(i).asString());
+		}
+
+		return temp;
+	}
+}

@@ -1,0 +1,106 @@
+import org.apache.http.Header;
+import org.apache.http.message.BasicHeader;
+
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.ParseException;
+
+public class Sound {
+
+	// ///////////////////
+	// GLOBAL VARIABLES //
+	// / /////////////////
+
+	// the raw JSON object
+	JsonObject json;
+
+	// values found in the search results
+	private int id;
+
+	// Values used with OAuth2 authentication
+	private String url;
+
+	// //////////////
+	// CONSTRUCTOR //
+	// //////////////
+
+	public Sound(JsonObject object) {
+
+		// sets the raw JSON object
+		json = object;
+
+		// gets the id
+		id = object.get("id").asInt();
+
+		// gets the Freesound API Sound instance
+		object = getFreesoundAPISoundInstance();
+
+		// makes download URL
+		url = makeUrl();
+		object.add("download_url", url);
+
+	}
+
+	private JsonObject getFreesoundAPISoundInstance() {
+
+		// sets headers
+		Header[] headers = { new BasicHeader("Content-type", "application/json") };
+
+		// sets Freesound API Sound Instance url
+		String tempUrl = "http://www.freesound.org/apiv2/sounds/" + id + "/";
+
+		// executes GET request
+		String output = Main.sendHttpGet(tempUrl, headers);
+
+		JsonObject j = null;
+		try {
+			j = JsonObject.readFrom(output);
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		} catch (UnsupportedOperationException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return j;
+
+	}
+
+	// /////////////////
+	// PUBLIC METHODS //
+	// /////////////////
+
+	// /////////////////
+	// GLBOAL GETTERS //
+	// /////////////////
+
+	public JsonObject getJsonObject() {
+		return json;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	// //////////////////
+	// PRIVATE METHODS //
+	// //////////////////
+
+	/**
+	 * Makes the download url used to pull the file from the Freesound API.
+	 * NOTE: Requires an access token to actually download the file.
+	 * 
+	 * @return {@code String} download url
+	 */
+	private String makeUrl() {
+		String temp = "https://www.freesound.org/apiv2/sounds/" + id
+				+ "/download/";
+
+		return temp;
+	}
+
+}

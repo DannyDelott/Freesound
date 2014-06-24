@@ -1,0 +1,27 @@
+{
+  "/Users/dannydelott/Google Drive/Freesound/Freesound/JSON Parser/minimal-json-0.9.2-SNAPSHOT.jar": {
+    "location": "/Users/dannydelott/Google Drive/Freesound/Freesound/JSON Parser/minimal-json-0.9.2-SNAPSHOT.jar",
+    "status": "UNRESOLVED",
+    "error": "No call model found for \u0027/Users/dannydelott/Google Drive/Freesound/Freesound/JSON Parser/minimal-json-0.9.2-SNAPSHOT.jar\u0027. Neither fingerprint \u0027ca47a9d007a2ae9b6dfdd28c43e589bf2fbce7b5\u0027 nor symbolic name \u0027minimal-json\u0027 are known."
+  },
+  "/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/classes.jar": {
+    "coordinate": "jre:jre:zip:call:1.0.0",
+    "location": "/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/classes.jar",
+    "status": "RESOLVED"
+  },
+  "/Users/dannydelott/Google Drive/Freesound/Freesound/src": {
+    "location": "/Users/dannydelott/Google Drive/Freesound/Freesound/src",
+    "status": "UNRESOLVED",
+    "error": "No class path info available for \u0027/Users/dannydelott/Google Drive/Freesound/Freesound/src\u0027. Skipped."
+  },
+  "/Users/dannydelott/Google Drive/Freesound/Freesound/Apache Commons IO/commons-io-2.4.jar": {
+    "coordinate": "org.apache.commons:org.apache.commons.io:zip:call:2.0.0",
+    "location": "/Users/dannydelott/Google Drive/Freesound/Freesound/Apache Commons IO/commons-io-2.4.jar",
+    "status": "RESOLVED"
+  },
+  "/Users/dannydelott/Google Drive/Freesound/Freesound/apachehttpclient.jar": {
+    "location": "/Users/dannydelott/Google Drive/Freesound/Freesound/apachehttpclient.jar",
+    "status": "UNRESOLVED",
+    "error": "No call model found for \u0027/Users/dannydelott/Google Drive/Freesound/Freesound/apachehttpclient.jar\u0027. Neither fingerprint \u00270c8e637984bd85bbade8b3ea1df34c2c05db28b9\u0027 nor symbolic name \u0027org.apache.httpcomponents.httpmime\u0027 are known."
+  }
+}

@@ -1,0 +1,61 @@
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.apache.commons.io.FileUtils;
+
+public class Sound {
+
+	// ///////////////////
+	// GLOBAL VARIABLES //
+	// / /////////////////
+
+	private int id;
+	private String name;
+	private String username;
+	private String url;
+
+	// //////////////
+	// CONSTRUCTOR //
+	// //////////////
+
+	public Sound(int i, String n, String u) {
+		id = i;
+		name = n;
+		username = u;
+		url = makeUrl();
+
+	}
+
+	// /////////////////
+	// PUBLIC METHODS //
+	// /////////////////
+
+	public int getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	// //////////////////
+	// PRIVATE METHODS //
+	// //////////////////
+
+	private String makeUrl() {
+		String temp = "https://www.freesound.org/apiv2/sounds/" + id
+				+ "/download/";
+
+		return temp;
+	}
+}

@@ -1,0 +1,784 @@
+import java.awt.Desktop;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Scanner;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
+import com.eclipsesource.json.ParseException;
+
+public class Main {
+
+	// ////////////////////
+	// RUNTIME ARGUMENTS //
+	// ////////////////////
+
+	private static String keyword;
+	private static int minDuration;
+	private static int maxDuration;
+	private static int quantity;
+	private static String filetype;
+
+	// ///////////////////
+	// GLOBAL VARIABLES //
+	// ///////////////////
+
+	// Client ID
+	private static String clientId = "608002b12fb0074895d5";
+
+	// Application API key (client secret)
+	private static String apiKey = "846254619a45045250eb4797492b6e5f5df31328";
+
+	// Authorization code (good for 10 minutes)
+	private static String authorizationCode;
+
+	// Access token (good for 24 hours)
+	private static String accessToken;
+	private static String refreshToken;
+
+	// list of sounds
+	private static List<Sound> sounds = new ArrayList<Sound>();
+
+	// number of sounds downloaded
+	private static int numDownloaded = 0;
+
+	static// outputs Sound objects to index file
+	OutputLog out = null;
+
+	// error flags
+	public static boolean flagRuntimeCommands = false;
+	public static boolean flagLogIn = false;
+	public static boolean flagAccessToken = false;
+	public static boolean flagSearch = false;
+	public static boolean flagDownload = false;
+	public static boolean flagJsonIndexFile = false;
+
+	// ///////
+	// MAIN //
+	// ///////
+
+	public static void main(String[] args) throws IOException,
+			URISyntaxException {
+
+		// -----------------
+		// 0.
+		// INITIALIZES TIMER
+		// -----------------
+
+		// Initializes a Timer object
+		//
+		// This Timer begins timing once the user has given the authorization
+		// code. Once all downloads are finished, it stops timing and will
+		// display the elapsed processing time.
+
+		Timer t = new Timer();
+
+		// ------------------------------------------------------------------
+		// 1.
+		// SETS RUNTIME ARGUMENTS, INITIALIZES OUTPUTLOG, CHECKS REFRESH TOKEN
+		// ------------------------------------------------------------------
+
+		// Assigns runtime arguments to global variables.
+		//
+		// The user must specify 5 distinct runtime arguments to use the
+		// program. The keyword, the minimum duration (in seconds), the maximum
+		// duration (in seconds), quantity to download, and a file type (eg:
+		// wav, mp3, ogg, etc..).
+		//
+		// NOTE: If the quantity exceeds the number of search results available
+		// or the user inputs -1 for the quantity argument, all search results
+		// will be downloaded.
+
+		assignRuntimeArgs(args);
+		if (flagRuntimeCommands) {
+			return;
+		}
+
+		// Initializes an OutputLog object
+		//
+		// This OutputLog object exports the Sound objects' meta-data to a
+		// keyword-specific JSON file. This makes it easy to read in the sound
+		// files into whatever program requires them.
+		try {
+			out = new OutputLog(keyword + "_sounds.json");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			flagJsonIndexFile = true;
+		}
+
+		// Checks for a previous refresh token file.
+		//
+		// Sets the refreshToken to the value stored in the refresh_token.json
+		// file. This prevents the user from having to re-authenticate manually
+		// by logging in to the Freesound API and obtaining a new authorization
+		// code.
+		refreshToken = getRefreshTokenFromFile();
+
+		// ---------------------
+		// 2.
+		// OAUTH2 AUTHENTICATION
+		// ---------------------
+
+		if (refreshToken != null) {
+
+			// Begin timer
+			//
+			// "Start" the Timer once the authorization code has been given.
+			// More specifically, this just logs the current System time in
+			// milliseconds.
+			t.begin();
+
+			// Exchanges refresh token for new access and refresh tokens.
+			//
+			// Using an HTTP POST request, the program exchanges the refresh
+			// token for a new 24-hour access token and refresh token. The
+			// program can now download .wav files from the Freesound API by
+			// appending the access token to its queries.
+			//
+			// NOTE: If the stored refresh token has expired, the user must
+			// manually obtain the authorization token.
+			getAccessAndRefreshTokensFromAuthorizationCode(TokenType.REFRESH);
+		}
+
+		if (refreshToken == null || flagAccessToken) {
+
+			System.out
+					.println("ERROR: The refresh token is either missing or expired.  Please log in again with your Freesound username and password.\n");
+
+			// Opens api log in page in browser.
+			//
+			// User must log in with their Freesound account, then authorize
+			// the program to run with their credentials. The user must copy
+			// and paste the authorization code from the web browser and
+			// into the program in the next step.
+
+			launchLoginPage();
+			if (flagLogIn) {
+				return;
+			}
+
+			// Gets authorization code.
+			//
+			// This is a simple Scanner method to collect the user's
+			// 10-minute authorization code from the previous step. It will
+			// be used to get an access and refresh token to complete OAuth2
+			// authentication and enable the program to download .wav files
+			// from the Freesound API.
+
+			getAuthorizationCodeFromUserInput();
+
+			// Begin timer
+			//
+			// "Start" the Timer once the authorization code has been given.
+			// More specifically, this just logs the current System time in
+			// milliseconds.
+			t.begin();
+
+			// Exchanges authorization code for access and refresh tokens.
+			//
+			// Using an HTTP POST request, the program now exchanges the
+			// authorization code for a 24-hour access token and refresh
+			// token. The program can now download .wav files from the
+			// Freesound API by appending the access token to its queries.
+
+			getAccessAndRefreshTokensFromAuthorizationCode(TokenType.ACCESS);
+			if (flagAccessToken) {
+				return;
+			}
+
+		}
+
+		System.out.println("\nACCESS TOKEN:\t\t" + accessToken);
+		System.out.println("REFRESH TOKEN:\t\t" + refreshToken);
+
+		// ------------------------------
+		// 2.
+		// QUERIES FREESOUND API (SEARCH)
+		// ------------------------------
+
+		// Searches for .wav files on Freesound.
+		//
+		// Using an HTTP GET request, the program uses the API key/client secret
+		// to return a JSON search results page for that keyword and duration
+		// threshold. This is then put into a List of Sound objects (global:
+		// sounds) to handle exporting the .wav files to the keyword directory
+		// and building the final JSON sounds list file.
+
+		getSoundsList();
+		if (flagSearch) {
+			return;
+		}
+
+		// --------------------------------------
+		// 3.
+		// SAVES SOUND FILES TO KEYWORD DIRECTORY
+		// --------------------------------------
+
+		// Downloads the sounds from the Freesound API.
+		//
+		// Using the List of Sound objects, make the keyword directory then loop
+		// over the Sound objects downloading the actual files from the
+		// Freesound API and adding the JSON object to the index file. This
+		// makes it easy to read in the sound files into whatever program
+		// requires them.
+
+		downloadSounds();
+		if (flagDownload) {
+			return;
+		}
+
+		System.out.println("\nFINISHED: " + numDownloaded
+				+ " sound file(s) downloaded.");
+
+		t.end();
+		t.printFormattedExecutionTime();
+
+	}
+
+	// //////////////////
+	// PRIVATE METHODS //
+	// //////////////////
+
+	private static void assignRuntimeArgs(String[] a) {
+
+		// error checks number of commands
+		if (a.length != 5) {
+			System.out
+					.println("ERROR:\tMissing runtime commands.  "
+							+ "You must enter a search term, min duration, max duration, quantity to download, and file type (eg: \"wav\", \"mp3\", \"ogg\").");
+			flagRuntimeCommands = true;
+			return;
+		}
+
+		// Search term
+		keyword = null;
+		try {
+			keyword = URLEncoder.encode(a[0], "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+			return;
+		}
+		System.out.println("\nSEARCH TERM:\t\t" + a[0]);
+
+		try {
+
+			// FILTER - Duration
+			minDuration = Integer.parseInt(a[1]);
+			maxDuration = Integer.parseInt(a[2]);
+			System.out.println("DURATION:\t\t" + minDuration + " to "
+					+ maxDuration + " seconds");
+
+			// Quantity to download
+			quantity = Integer.parseInt(a[3]);
+			System.out.println("QUANTITY TO DOWNLOAD:\t" + quantity);
+
+			// sound file type
+			filetype = a[4];
+			System.out.println("FILE TYPE:\t\t" + filetype);
+
+		} catch (NumberFormatException e2) {
+			e2.printStackTrace();
+			flagRuntimeCommands = true;
+			return;
+		}
+
+	}
+
+	private static String getRefreshTokenFromFile() {
+		String temp = null;
+		JsonObject j;
+
+		// checks if refresh token file exists
+		File f = new File("refresh_token.json");
+		if (!f.exists()) {
+			return null;
+		}
+
+		// reads in refresh token file and parses out token value
+		try {
+			j = JsonObject.readFrom(openFile("refresh_token.json"));
+			temp = j.get("refresh_token").asString();
+		} catch (UnsupportedOperationException e) {
+			return null;
+		}
+
+		return temp;
+	}
+
+	private static void launchLoginPage() {
+		if (Desktop.isDesktopSupported()) {
+
+			try {
+				Desktop.getDesktop()
+						.browse(new URI(
+								"https://www.freesound.org/apiv2/oauth2/logout_and_authorize/?client_id=608002b12fb0074895d5&response_type=code&state=xyz"));
+			} catch (IOException e) {
+				e.printStackTrace();
+				flagLogIn = true;
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+				flagLogIn = true;
+			}
+		}
+
+	}
+
+	public static void getAuthorizationCodeFromUserInput() {
+		boolean goodInput = false;
+		Scanner scanSelection = new Scanner(System.in);
+		String input = null;
+
+		while (!goodInput) {
+
+			// prompts for authorization code and gets user input as String
+			System.out.print("PROMPT:\tPaste in your authorization code: ");
+			input = scanSelection.nextLine().toLowerCase();
+
+			// bad input, loop again
+			if (!input.matches("^[A-Za-z0-9]+$")) {
+				continue;
+			}
+
+			goodInput = true;
+		}
+
+		authorizationCode = input;
+	}
+
+	/**
+	 * Handles OAuth2 authentication Step 3, where the program exchanges the
+	 * user-given authentication code for an access token and refresh token.
+	 * 
+	 * @param t
+	 *            {@code ACCESS} generates access and refresh tokens from
+	 *            authentication code. Requires user to log in to the Freesound
+	 *            API.
+	 * 
+	 * @param t
+	 *            {@code REFRESH} generates access and refresh tokens from
+	 *            previous refresh token.
+	 */
+	private static void getAccessAndRefreshTokensFromAuthorizationCode(
+			TokenType t) {
+
+		flagAccessToken = false;
+
+		// builds POST parameters
+		List<NameValuePair> parameters = new ArrayList<NameValuePair>();
+		parameters.add(new BasicNameValuePair("client_id", clientId));
+		parameters.add(new BasicNameValuePair("client_secret", apiKey));
+
+		if (t == TokenType.ACCESS) {
+			parameters.add(new BasicNameValuePair("grant_type",
+					"authorization_code"));
+			parameters.add(new BasicNameValuePair("code", authorizationCode));
+
+		}
+		if (t == TokenType.REFRESH) {
+
+			if (refreshToken == null) {
+				flagAccessToken = true;
+				return;
+			}
+			parameters
+					.add(new BasicNameValuePair("grant_type", "refresh_token"));
+			parameters
+					.add(new BasicNameValuePair("refresh_token", refreshToken));
+
+		}
+
+		// executes POST
+		String output = sendHttpPost(
+				"https://www.freesound.org/apiv2/oauth2/access_token/",
+				parameters);
+
+		// extracts access token and refresh token
+		try {
+			JsonObject response = JsonObject.readFrom(output);
+			accessToken = response.get("access_token").asString();
+			refreshToken = response.get("refresh_token").asString();
+
+			// saves refresh token
+			OutputLog o = new OutputLog("refresh_token.json");
+			JsonObject j = new JsonObject();
+			j.add("refresh_token", refreshToken);
+			o.writeJsonObjectToFile(j);
+
+		} catch (ParseException e) {
+			e.printStackTrace();
+			flagAccessToken = true;
+			return;
+		} catch (UnsupportedOperationException e) {
+			e.printStackTrace();
+			flagAccessToken = true;
+			return;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flagAccessToken = true;
+			return;
+		}
+
+	}
+
+	private static void getSoundsList() {
+
+		// page number in url
+		int pageNum = 1;
+
+		// number of results
+		int numResults = 0;
+
+		// builds query string - PAGE 1
+		String nextPage = null;
+		try {
+			if (filetype.equals("*")) {
+				nextPage = "http://www.freesound.org/apiv2/search/text/?query="
+						+ keyword
+						+ "&filter="
+						+ URLEncoder.encode("duration:[" + minDuration + " TO "
+								+ maxDuration + "]", "UTF-8") + "&page="
+						+ pageNum + "&token=" + apiKey;
+			} else {
+				nextPage = "http://www.freesound.org/apiv2/search/text/?query="
+						+ keyword
+						+ "&filter="
+						+ URLEncoder.encode("duration:[" + minDuration + " TO "
+								+ maxDuration + "]", "UTF-8") + "+"
+						+ URLEncoder.encode("type:" + filetype, "UTF-8")
+						+ "&page=" + pageNum + "&token=" + apiKey;
+			}
+
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+			return;
+		}
+
+		// loops while there is a next page and quantity has not been met
+		while (nextPage != null && sounds.size() < quantity) {
+
+			// sets headers
+			Header[] headers = { new BasicHeader("Content-type",
+					"application/json") };
+
+			// executes GET request
+			String output = sendHttpGet(nextPage, headers);
+
+			// parses the json output
+			try {
+				JsonObject j = JsonObject.readFrom(output);
+
+				// PAGE 1
+				// prints number of total results
+				if (pageNum == 1) {
+
+					numResults = j.get("count").asInt();
+					System.out.println("\nSEARCH RESULTS:\t\t" + numResults);
+
+					// sets quantity to download to the number of results if
+					// there are fewer results than are possible to download
+					if (numResults < quantity) {
+						System.out
+								.println("\nWARNING: The quantity to download is larger than the number of available search results.");
+						quantity = numResults;
+
+					}
+
+					System.out.println("\nSCRAPING:\t\t" + quantity
+							+ " search result(s)\n");
+
+				}
+
+				// prints current results page
+				System.out.print("\t\t\tPage " + pageNum);
+
+				// extracts the next page
+				if (!j.get("next").isNull()) {
+					try {
+						if (filetype.equals("*")) {
+							nextPage = "http://www.freesound.org/apiv2/search/text/?query="
+									+ keyword
+									+ "&filter="
+									+ URLEncoder.encode("duration:["
+											+ minDuration + " TO "
+											+ maxDuration + "]", "UTF-8")
+									+ "&page="
+									+ (pageNum + 1)
+									+ "&token="
+									+ apiKey;
+						} else {
+							nextPage = "http://www.freesound.org/apiv2/search/text/?query="
+									+ keyword
+									+ "&filter="
+									+ URLEncoder.encode("duration:["
+											+ minDuration + " TO "
+											+ maxDuration + "]", "UTF-8")
+									+ "+"
+									+ URLEncoder.encode("type:" + filetype,
+											"UTF-8")
+									+ "&page="
+									+ (pageNum + 1)
+									+ "&token=" + apiKey;
+						}
+
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+				}
+
+				// extracts results array
+				JsonArray results = j.get("results").asArray();
+
+				// loops over results array and extracts results
+
+				Sound tempSound;
+				Iterator<JsonValue> i = results.iterator();
+				int counter = 0;
+				while (i.hasNext() && sounds.size() < quantity) {
+
+					// gets object from array
+					JsonObject object = i.next().asObject();
+
+					// builds Sound object
+					tempSound = Sound.newInstance(object, apiKey);
+
+					// timeout then repeat if necessary
+					while (tempSound == null) {
+						System.out.println("[Timing out for 60 seconds]");
+						System.out.print("\nTIMEOUT:\t\t");
+						Timer.timeout(60 * 1000);
+						System.out.print("\n" + pageNum + "\t\t\t");
+						tempSound = Sound.newInstance(object, apiKey);
+
+					}
+
+					// adds Sound object to list
+					sounds.add(tempSound);
+
+					// increments counter of results on page
+					counter++;
+
+					System.out.print(".");
+				}
+
+				System.out.println(counter + " result(s) indexed.");
+			} catch (ParseException e) {
+				e.printStackTrace();
+				flagSearch = true;
+				return;
+			} catch (UnsupportedOperationException e) {
+				e.printStackTrace();
+				flagSearch = true;
+				return;
+			}
+
+			pageNum++;
+
+		}
+	}
+
+	private static void downloadSounds() {
+
+		// creates the keyword directory
+		System.out
+				.println("\nDOWNLOADING:\t\t" + sounds.size() + " sound(s)\n");
+		createDirectory(keyword);
+
+		System.out.println("\t\t\t#\tID\tFilename");
+		System.out.println("\t\t\t------------------------");
+
+		// loops over all sounds in list
+		for (Sound s : sounds) {
+
+			System.out.print("\t\t\t" + (numDownloaded + 1) + "\t" + s.getId()
+					+ "\t" + s.getName());
+
+			// the output stream to save .wav file
+			FileOutputStream out;
+
+			// the file to save
+			File f = new File(keyword + "/" + s.getId() + "." + s.getFileType());
+
+			HttpResponse res;
+			CloseableHttpClient httpclient = HttpClients.createDefault();
+			String authorizationString = "Bearer " + accessToken;
+
+			try {
+				HttpGet request = new HttpGet(URI.create(s.getUrl()));
+
+				request.addHeader("Authorization", authorizationString);
+				res = httpclient.execute(request);
+
+				out = new FileOutputStream(f);
+
+				int read = 0;
+				byte[] bytes = new byte[16 * 1024];
+				long totalBytesInStream = 0;
+				while ((read = res.getEntity().getContent().read(bytes)) != -1) {
+					out.write(bytes, 0, read);
+					System.out.print(".");
+					totalBytesInStream = totalBytesInStream + bytes.length;
+				}
+
+				// prints the total filesize
+				System.out.print("success [");
+				System.out.println(FileUtils
+						.byteCountToDisplaySize(totalBytesInStream) + "]");
+
+				// closes the file streams
+				res.getEntity().getContent().close();
+				out.close();
+
+				// saves Sound object to JSON index file
+				saveSoundToJsonIndexFile(s);
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			numDownloaded++;
+		}
+	}
+
+	private static void saveSoundToJsonIndexFile(Sound s) {
+
+		try {
+			out.writeJsonObjectToFile(s.getJsonObject());
+		} catch (IOException e) {
+			e.printStackTrace();
+			flagJsonIndexFile = true;
+			return;
+		}
+
+	}
+
+	private static void createDirectory(String path) {
+		File f = new File(path);
+		if (!f.isDirectory()) {
+			f.mkdir();
+		}
+	}
+
+	public static String sendHttpGet(String url, Header[] headers) {
+		// initializes new HTTP client and GET request
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpGet httpGet = new HttpGet(url);
+
+		// sets content type
+		httpGet.setHeaders(headers);
+
+		// sends HTTP GET request
+		CloseableHttpResponse response1 = null;
+		try {
+			response1 = httpclient.execute(httpGet);
+		} catch (ClientProtocolException e1) {
+			e1.printStackTrace();
+			return null;
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			return null;
+		}
+
+		// gets the response as string
+		String output = null;
+		try {
+			HttpEntity entity1 = response1.getEntity();
+			output = EntityUtils.toString(entity1, "UTF-8");
+
+			EntityUtils.consume(entity1);
+			response1.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return output;
+
+	}
+
+	private static String sendHttpPost(String url,
+			List<NameValuePair> parameters) {
+
+		CloseableHttpClient client = HttpClients.createDefault();
+		HttpPost post = new HttpPost(url);
+
+		String output = "";
+		String line = "";
+		try {
+
+			// sets parameters
+			List<NameValuePair> nameValuePairs = parameters;
+			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			// executes post
+			HttpResponse response = client.execute(post);
+
+			// returns output as stream
+			BufferedReader rd = new BufferedReader(new InputStreamReader(
+					response.getEntity().getContent()));
+
+			while ((line = rd.readLine()) != null) {
+				output = output + line + "\n";
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return output;
+	}
+
+	private static String openFile(String fileName) {
+
+		String returnValue = "";
+		FileReader file = null;
+
+		try {
+			file = new FileReader(fileName);
+			BufferedReader reader = new BufferedReader(file);
+			String line = "";
+
+			while ((line = reader.readLine()) != null) {
+				returnValue += line + "\n";
+			}
+
+			reader.close();
+			file.close();
+		} catch (FileNotFoundException e) {
+			return null;
+		} catch (IOException e) {
+			return null;
+		}
+		return returnValue;
+	}
+}

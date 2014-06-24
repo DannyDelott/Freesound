@@ -1,0 +1,62 @@
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.apache.commons.io.FileUtils;
+
+public class Sound {
+
+	// ///////////////////
+	// GLOBAL VARIABLES //
+	// / /////////////////
+
+	private int id;
+	private String name;
+	private String username;
+	private String url;
+
+	// //////////////
+	// CONSTRUCTOR //
+	// //////////////
+
+	public Sound(int i, String n, String u) {
+		id = i;
+		name = n;
+		username = u;
+		url = constructDownloadUrl();
+
+	}
+
+	// /////////////////
+	// PUBLIC METHODS //
+	// /////////////////
+
+	public int getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	// //////////////////
+	// PRIVATE METHODS //
+	// //////////////////
+
+	private static void createDirectory(String path) {
+		File f = new File(path);
+		if (!f.isDirectory()) {
+			f.mkdir();
+		}
+	}
+
+}
