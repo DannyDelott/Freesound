@@ -7,6 +7,10 @@ This Java program provides functionality for downloading audio files from the Fr
 ##How it Works
 
 The Freesound Dataset Builder is an executable JAR file that logs into the [Freesound APIv2](http://www.freesound.org/docs/api/) on the user's behalf and automates the process of downloading raw audio files and the meta-data associated with them. 
+##Download
+The `freesound.jar` file is an executable JAR that contains the entire Freesound Dataset builder program.  Users who only wish to use the program as-is should simply download this file and run it.  See [Usage](#usage).
+
+Also, users who are interested in making changes or compiling the program on their own are encouraged to download the Java project files and tinker away!
 
 ##New Users 
 You must authorize the Freesound Dataset Builder to make API calls on your behalf by logging into the Freesound API with your Freesound account username and password. 
@@ -14,7 +18,7 @@ You must authorize the Freesound Dataset Builder to make API calls on your behal
 On the initial launch, the default web browser is opened automatically to the Freesound API login screen.  Once logged in, click "Authorize" and copy and paste the authorization code into the Freesound Dataset Builder.  After this initial authorization, a file named `refresh_token.json` will be generated and used to automate the authorization process for future runs. 
 
 ##Usage
-To use the tool, simply open a Terminal, navigate to the directory containing the "freesound.jar" file, and append the following runtime arguments at launch:
+To use the tool, simply open a Terminal window, navigate to the directory containing the "freesound.jar" file, and append the following runtime arguments at launch:
 
     java -jar freesound.jar <KEYWORD_IN_QUOTES> <MIN_DURATION_IN_SECONDS> <MAX_DURATION_IN_SECONDS> <QUANTITY_TO_DOWNLOAD> <FILETYPE_IN_QUOTES>
     
